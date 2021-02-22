@@ -17,7 +17,11 @@ Inductive NatHolder : Type :=
                                   
 
 Inductive Vector (A : Type) : nat -> Type :=
-| vect (arr : array A) : Vector A (BinInt.Z.to_nat(to_Z(length arr))).
+| vect (arr : array A) {n : nat} {prf : n = BinInt.Z.to_nat(to_Z(length arr))}  :
+    Vector A n.
+
+Definition make_vect {A : Type} (arr : array A) : Vector A (BinInt.Z.to_nat(to_Z(length arr))) :=
+  @vect _ arr (BinInt.Z.to_nat((to_Z(length arr)))) (eq_refl).
 
 
 Lemma vect_length_set : forall (A : Type) (arr : array A) (i : int) (a : A), BinInt.Z.to_nat(to_Z(length arr)) = BinInt.Z.to_nat(to_Z(length (arr.[i <- a]))).
@@ -28,7 +32,7 @@ Proof.
 Qed.
 
 Definition example_vector : Vector nat 3 :=
-  vect _ (make 3 3).
+  @vect _ (make 3 3) 3 (eq_refl) .
 
 Print example_vector.
 
@@ -48,12 +52,12 @@ Qed.
 
 
 Definition example_vector2 : Vector nat 3 :=
-  vect _ ([| 1 ; 2 ; 3 | 4 : nat |]).
+  @vect _ ([| 1 ; 2 ; 3 | 4 : nat |]) 3 eq_refl.
 
-Definition length {A : Type} {n : nat} : Vector A n -> nat :=
+Definition vect_length {A : Type} {n : nat} : Vector A n -> nat :=
   fun v => n.
 
-Theorem t2 : (length example_vector) = (3).
+Theorem t2 : (vect_length example_vector) = (3).
 Proof.
   unfold length.
   reflexivity.
@@ -66,22 +70,46 @@ Definition vec_get {A : Type} {n : nat} (v : Vector A n) (idx : int) : A :=
   end.
 
 
+Definition set_lemma (A : Type) (n : nat) (arr: array A) (idx : int) (a : A) :
+  BinInt.Z.to_nat(to_Z(length arr)) = BinInt.Z.to_nat(to_Z(length (arr.[idx <- a]))) :=
+  match length_set A arr idx a with
+  | eq_refl => eq_refl
+  end.
+
+Definition set_lemma2 (A : Type) (n : nat) (arr : array A) (idx : int) (a : A) :
+  n = BinInt.Z.to_nat(to_Z(length arr)) ->
+                      n = BinInt.Z.to_nat(to_Z(length (arr.[idx <- a]))) :=
+                                                 match length_set A arr idx a with
+                                                 | eq_refl => fun x => x
+                                                 end.
+
 Definition vec_set {A : Type} {n : nat} (v : Vector A n) (idx : int) (a : A) : Vector A n :=
   match v with
-  | vect _ arr =>
-    match length_set A arr idx a with
-    | _ =>
-      match vect_length_set A arr idx a with
-      | _ => vect _ arr.[idx <- a]
-      end
-    end
-  end.
-                          
+  | @vect _ arr n prf => @vect _ (arr.[idx<-a]) n (set_lemma2 A n arr idx a prf)
+  end.             
 
-Fixpoint fold_vec_helper {A B : Type} (v1 : Vector A n) (f : A -> B -> B) (acc : B) (idx : nat) :=
+Notation "t .[ i ]" := (vec_get t i)
+  (at level 2, left associativity, format "t .[ i ]").
+Notation "t .[ i <- a ]" := (vec_set t i a)
+  (at level 2, left associativity, format "t .[ i <- a ]").
+
+Definition test3 : nat :=
+  vec_get( vec_set (example_vector) 0 1 ) 0.
+
+Lemma t3 : test3 = 1.
+Proof.
+  unfold test3.
+  unfold vec_set.
+  unfold example_vector.
+  simpl.
+  unfold set.
+  reflexivity.
+Qed.
+
+Fixpoint fold_vec_helper {A B : Type} (v1 : Vector A n) (f : A -> B -> B) (acc : B) (idx : nat) : B :=
   match idx with
   | S k => fold_vec_helper v1 f (f 
-  | O   => 
+  | O   => acc
   end.
   
 
