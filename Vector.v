@@ -106,33 +106,37 @@ Proof.
   reflexivity.
 Qed.
 
-Fixpoint fold_vec_helper {A B : Type} (v1 : Vector A n) (f : A -> B -> B) (acc : B) (idx : nat) : B :=
-  match idx with
-  | S k => fold_vec_helper v1 f (f 
+
+Fixpoint fold_vect_helper {A B : Type} {n: nat} (v : Vector A n) (f : A -> B -> B) (acc : B) (cnt : nat) (idx:int) : B :=
+  match cnt with
+  | S k => fold_vect_helper v f (f v.[idx] acc) k (idx+1%int63) 
   | O   => acc
   end.
-  
+Search "to_int".
+
+Definition fold_vect {A B: Type} {n: nat} (v: Vector A n) (f: A -> B -> B) (base: B) := fold_vect_helper v f base n (0%int63).
 
 
-Fixpoint fold_vec {A B: Type} {n: nat} (v1: Vector A n) (f: A -> B -> B) (acc: B) (idx : nat) :=
-  match v1 with
-  | (vect _ a) => if eqb idx 0%int63 then f a.[idx%int63] acc
-                 else fold_vec v1 f (f a.[idx] acc) (idx - 1%int63)
+Fixpoint zip_with_vect_helper {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) (cnt: nat) (idx: int) : Vector C n :=
+  match cnt with
+  |  0 => tgt
+  | S k =>
+      let el := f (v1.[idx]) (v2.[idx]) in
+      zip_with_vect_helper v1 v2 f (tgt.[idx <- el]) k (idx + 1%int63)
   end.
 
+Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) :=
+  zip_with_vect_helper v1 v2 f tgt n (0%int63).
 
+Lemma fold_vect0 : fold_vect (make_vect (make 3 3)) (plus) 0 = 9.
+Proof.
+reflexivity.
+Qed.
 
- 
-
-Fixpoint zip_with_vec {A B: Type} {n: int} (v1 v2: Vector A n) (f: A -> A -> B) (tgt: Vector B n) (idx: int) : Vector B n :=
-  match (v1, v2, tgt) with
-    | (vect _ a1, vect _ a2, vect _ t) =>
-      let el := f (a1.[idx]) (a2.[idx]) in
-      if eqb idx 0%int63
-      then vect _ t.[idx <- el] (* Figure out how to use length_set axiom here *)
-      else  zipWithRec v1 v2 (vect _ t.[idx <- el]) (idx - 1%int63)
-  end.
-
+Lemma fold_vect1 : fold_vect (make_vect [| 3; 18; 27 | 3: nat |]) (plus) 5 = (18+3+27+5).
+Proof.
+reflexivity.
+Qed.
 
 
 Search array.
