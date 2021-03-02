@@ -143,7 +143,7 @@ Proof.
   apply leb_length.
 Qed.
 
-Lemma vect_make_length: forall A (arr: array A), vect_length_int (make_vect arr) = length arr.
+Lemma vect_make_length_arr: forall A (arr: array A), vect_length_int (make_vect arr) = length arr.
 Proof.
   easy.
 Qed.
@@ -156,15 +156,50 @@ Proof.
 Qed.
 
 Lemma vect_length_set : forall (A : Type) n (vect : Vector A n) (i : int) (a : A), vect_length_int vect = vect_length_int (vect.[i <- a]).
-
 Proof.
   intros.
   unfold vect_length_int.
-  destruct vect
+  destruct vect0.
+  destruct (vect A arr).[i <- a] eqn:H'.
+  unfold vec_set in H'.
+  injection H'.
+  intros.
+  rewrite <- H.
   rewrite length_set.
   reflexivity.
 Qed.
 
+Lemma make_length : forall (A : Type) (arr : array A) (a: A), length arr = length (make (length arr) a).
+Proof.
+  intros.
+  rewrite length_make.
+  rewrite leb_length.
+  reflexivity.
+Qed.
+
+Lemma vect_make_length: forall A n (vect: Vector A n) (a : A), vect_length_int vect = vect_length_int (make_vect (make (vect_length_int vect) a)).
+Proof.
+  intros.
+  rewrite vect_make_length_arr.
+  unfold vect_length_int.
+  destruct vect0.
+  apply make_length.
+Qed.
+
+Lemma vect_length_int_vect_length: forall A B n m (v1: Vector A n) (v2: Vector B m), vect_length_int v1 = vect_length_int v2 -> vect_length v1 = vect_length v2.
+Proof.
+  intros;
+  destruct v1, v2.
+  unfold vect_length, vect_length_int in *; subst.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Lemma vect_length_vect_length_type: forall A B n m (v1: Vector A n) (v2: Vector B m), vect_length v1 = vect_length v2 -> n = m.
+Proof.
+  intros.
+  destruct v1, v2; subst.
+   injection
 
 
 Local Close Scope int63_scope.
@@ -190,12 +225,14 @@ Fixpoint zip_with_vect_helper {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vecto
 Definition zip_with_vect_on {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) :=
   zip_with_vect_helper v1 v2 f tgt n (0%int63).
 
+
+
 Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) :=
   match v1 with
   | @vect _ arr n0 prf =>  let c := f v1.[0%int63] v2.[0%int63] in
                           match vect_length_make with
                             _ => 
-                            zip_with_vect_on v1 v2 f (@vect _ (make (length arr) c) n0 prf)
+                            zip_with_vect_on v1 v2 f (@vect _ (make (vect_length_int v1) c) n0 prf)
                           end
 
   end.
