@@ -118,7 +118,6 @@ Proof.
 Qed.
 
 Axiom vect_ext: forall A n (v1 v2: Vector A n),
-    vect_length_int v1 = vect_length_int v2 ->
     (forall i, i <? vect_length_int v1 = true -> v1.[i] = v2.[i]) ->
     v1 = v2.
 
@@ -309,7 +308,6 @@ Proof.
 Qed.
 
 Local Close Scope int63_scope.
-
 
 
 
