@@ -1,4 +1,3 @@
-Require Import Ring.
 Require Import Coq.Array.PArray.
 Require Import Coq.Numbers.Cyclic.Int63.Int63.
 Require ZArith.
@@ -118,7 +117,12 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma vect_ext : forall A n (v1 v2 : Vector A n),
+Axiom vect_ext: forall A n (v1 v2: Vector A n),
+    vect_length_int v1 = vect_length_int v2 ->
+    (forall i, i <? vect_length_int v1 = true -> v1.[i] = v2.[i]) ->
+    v1 = v2.
+
+Lemma vect_ext_default: forall A n (v1 v2 : Vector A n),
     vect_length_int v1 = vect_length_int v2 ->
     (forall i, i <? vect_length_int v1 = true -> v1.[i] = v2.[i]) ->
     vect_default v1 = vect_default v2 ->
@@ -268,8 +272,6 @@ Proof.
   assumption.
 Qed.
 
-
-
 Local Close Scope int63_scope.
 
 
@@ -347,14 +349,23 @@ Fixpoint zip_with_vect_helper {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vecto
 Definition zip_with_vect_on {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) :=
   zip_with_vect_helper v1 v2 f tgt n (0%int63).
 
-
+Lemma zip_with_lemma (A C: Type) n n0 (v1: Vector A n) (c: C): n0 = BinInt.Z.to_nat(to_Z(vect_length_int v1)) -> n = BinInt.Z.to_nat (to_Z (length (make (vect_length_int v1) c))).
+Proof.
+  intros.
+  simpl.
+  unfold vect_length_int in *.
+  destruct v1.
+  rewrite length_make.
+  rewrite leb_length.
+  assumption.
+Qed.
 
 Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) :=
   match v1 with
   | @vect _ arr n0 prf =>  let c := f v1.[0%int63] v2.[0%int63] in
                           match vect_length_make with
                             _ => 
-                            zip_with_vect_on v1 v2 f (@vect _ (make (vect_length_int v1) c) n0 prf)
+                            zip_with_vect_on v1 v2 f (@vect C (make (vect_length_int v1) c) n (zip_with_lemma A C n n0 v1 c prf))
                           end
 
   end.
