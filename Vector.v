@@ -263,7 +263,7 @@ Proof.
   unfold vect_length, vect_length_int in *; subst.
   rewrite H.
   reflexivity.
-Qed.
+Qed. 
 
 Lemma vect_length_vect_length_type: forall A B n m (v1: Vector A n) (v2: Vector B m), vect_length v1 = vect_length v2 -> n = m.
 Proof.
@@ -271,6 +271,28 @@ Proof.
   destruct v1, v2; subst.
   assumption.
 Qed.
+
+Axiom arr_length_positive: forall A (arr: array A), 0 <=? length arr = true.
+
+Lemma vect_length_type_vect_length_int: forall A B n m (v1: Vector A n) (v2: Vector B m), n = m -> vect_length_int v1 = vect_length_int v2.
+Proof.
+  intros.
+  destruct v1, v2.
+  subst.
+  simpl.
+  apply Znat.Z2Nat.inj in H.
+  apply to_Z_inj in H.
+  assumption.
+  replace BinNums.Z0 with (to_Z 0).
+  apply leb_spec.
+  apply arr_length_positive.
+  reflexivity.
+  replace BinNums.Z0 with (to_Z 0).
+  apply leb_spec.
+  apply arr_length_positive.
+  reflexivity.
+Qed.
+
 
 Local Close Scope int63_scope.
 
@@ -349,7 +371,8 @@ Fixpoint zip_with_vect_helper {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vecto
 Definition zip_with_vect_on {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) :=
   zip_with_vect_helper v1 v2 f tgt n (0%int63).
 
-Lemma zip_with_lemma (A C: Type) n n0 (v1: Vector A n) (c: C): n0 = BinInt.Z.to_nat(to_Z(vect_length_int v1)) -> n = BinInt.Z.to_nat (to_Z (length (make (vect_length_int v1) c))).
+
+Lemma zip_with_lemma (A C: Type) n (arr : array A) (v1: Vector A n) (c: C): n = BinInt.Z.to_nat(to_Z(length arr)) -> n = BinInt.Z.to_nat (to_Z (length (make (vect_length_int v1) c))).
 Proof.
   intros.
   simpl.
@@ -359,13 +382,12 @@ Proof.
   rewrite leb_length.
   assumption.
 Qed.
-
 Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) :=
   match v1 with
   | @vect _ arr n0 prf =>  let c := f v1.[0%int63] v2.[0%int63] in
                           match vect_length_make with
                             _ => 
-                            zip_with_vect_on v1 v2 f (@vect C (make (vect_length_int v1) c) n (zip_with_lemma A C n n0 v1 c prf))
+                            zip_with_vect_on v1 v2 f (@vect C (make (vect_length_int (vect A arr)) c) n (zip_with_lemma A C n arr (vect A arr) c prf))
                           end
 
   end.
