@@ -293,6 +293,20 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma vect_length_vect_length_int: forall A B n m (v1 : Vector A n) (v2 : Vector B m), vect_length v1 = vect_length v2 -> vect_length_int v1 = vect_length_int v2.
+Proof.
+  intros.
+  apply vect_length_vect_length_type in H.
+  apply vect_length_type_vect_length_int.
+  exact H.
+Qed.
+
+Lemma vect_length_type_vect_length: forall A B n m (v1: Vector A n) (v2: Vector B m), n = m -> vect_length v1 = vect_length v2.
+Proof.
+  intros.
+  unfold vect_length.
+  assumption.
+Qed.
 
 Local Close Scope int63_scope.
 
