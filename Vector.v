@@ -2,24 +2,6 @@ Require Import Coq.Array.PArray.
 Require Import Coq.Numbers.Cyclic.Int63.Int63.
 Require ZArith.
 
-
-Print Ring.
-(*
-Inductive Vector {A : Type} : A -> Int63.int -> Type :=
-| Hello (ar : array A) : (array A) -> Vector A (length ar).
-*)                               
-
-Check (eq_refl).
-
-
-Theorem test2 : forall n : { y : nat | y = 3 },
-                n = n.
-Proof.
-  intros.
-  destruct n.
-Abort.
-
-
 Class Field A : Type :=
   {
   plus : A -> A -> A;
@@ -331,64 +313,11 @@ Qed.
 Local Close Scope int63_scope.
 
 
-
-
-
-(*
-Definition example_vector : Vector nat 3 :=
-  @vect _ (make 3 3) 3 (eq_refl) .
-
-Print example_vector.
-
-Definition test : nat :=
-  match example_vector with
-  | vect _ ar => get ar 0
-  end.
-
-Theorem t1 :  test = 3.
-Proof.
-  unfold test.
-  unfold example_vector.
-  unfold make.
-  unfold get.
-  reflexivity.
-Qed.
-
-
-Definition example_vector2 : Vector nat 3 :=
-  @vect _ ([| 1 ; 2 ; 3 | 4 : nat |]) 3 eq_refl.
-
-
-
-
-Theorem t2 : (vect_length example_vector) = (3).
-Proof.
-  unfold length.
-  reflexivity.
-Qed.
-
-Definition test3 : nat :=
-  vec_get( vec_set (example_vector) 0 1 ) 0.
-
-Lemma t3 : test3 = 1.
-Proof.
-  unfold test3.
-  unfold vec_set.
-  unfold example_vector.
-  simpl.
-  unfold set.
-  reflexivity.
-Qed.
-
-*)
-
-
 Fixpoint fold_vect_helper {A B : Type} {n: nat} (v : Vector A n) (f : A -> B -> B) (acc : B) (cnt : nat) (idx:int) : B :=
   match cnt with
   | S k => fold_vect_helper v f (f v.[idx] acc) k (idx+1%int63) 
   | O   => acc
   end.
-Search "to_int".
 
 Definition fold_vect {A B: Type} {n: nat} (v: Vector A n) (f: A -> B -> B) (base: B) :=
   fold_vect_helper v f base n (0%int63).
@@ -417,20 +346,6 @@ Definition map_vect_on {A B: Type} {n: nat} (v: Vector A n) (f: A -> B) (tgt: Ve
   map_vect_helper v f tgt n (0%int63).
 
 
-Lemma zip_with_lemma (A C: Type) n
-      (arr : array A)
-      (v1: Vector A n)
-      (c: C):
-  n = BinInt.Z.to_nat(to_Z(length arr)) -> n = BinInt.Z.to_nat (to_Z (length (make (vect_length_int v1) c))).
-Proof.
-  intros.
-  simpl.
-  unfold vect_length_int in *.
-  destruct v1.
-  rewrite length_make.
-  rewrite leb_length.
-  assumption.
-Qed.
 
 
 Theorem nRect : forall (A : Type) (n n0 : nat) (v : Vector A n), n0 = BinInt.Z.to_nat(to_Z(vect_length_int v)) ->
@@ -478,7 +393,6 @@ Proof.
   apply prf.
 Qed.
 
-Print zip_with_vect_init.
 
 
 Definition zip_with_vect {A B C : Type} {n : nat} (v1 : Vector A n) (v2 : Vector B n) (f : A -> B -> C) : Vector C n :=
@@ -504,17 +418,3 @@ Definition vect_sub {n : nat} {A : Type} `{F : Field A} (v1 : Vector A n) (v2: V
 
 
 
-
-
-Lemma fold_vect0 : fold_vect (make_vect (make 3 3)) (plus) 0 = 9.
-Proof.
-reflexivity.
-Qed.
-
-Lemma fold_vect1 : fold_vect (make_vect [| 3; 18; 27 | 3: nat |]) (plus) 5 = (18+3+27+5).
-Proof.
-reflexivity.
-Qed.
-
-Search array.
-Print array.
