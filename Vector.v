@@ -19,7 +19,17 @@ Proof.
   destruct n.
 Abort.
 
-  
+
+Class Field A : Type :=
+  {
+  plus : A -> A -> A;
+  zero : A;
+  add_inv: A -> A;
+  mult : A -> A -> A;
+  one : A;
+  mult_inv: A -> A
+  }.
+
 
 Inductive Vector (A : Type) : nat -> Type :=
 | vect (arr : array A) {n : nat} {prf : n = BinInt.Z.to_nat((to_Z(length arr)))}  :
@@ -392,8 +402,19 @@ Fixpoint zip_with_vect_helper {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vecto
       zip_with_vect_helper v1 v2 f (tgt.[idx <- el]) k (idx + 1%int63)
   end.
 
+Fixpoint map_vect_helper {A B: Type} {n: nat} (v: Vector A n) (f: A -> B ) (tgt: Vector B n) (cnt: nat) (idx: int) : Vector B n :=
+  match cnt with
+  |  0 => tgt
+  | S k =>
+      let el := f (v.[idx]) in
+      map_vect_helper v f (tgt.[idx <- el]) k (idx + 1%int63)
+  end.
+
 Definition zip_with_vect_on {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) :=
   zip_with_vect_helper v1 v2 f tgt n (0%int63).
+
+Definition map_vect_on {A B: Type} {n: nat} (v: Vector A n) (f: A -> B) (tgt: Vector B n) :=
+  map_vect_helper v f tgt n (0%int63).
 
 
 Lemma zip_with_lemma (A C: Type) n
@@ -411,6 +432,7 @@ Proof.
   assumption.
 Qed.
 
+
 Theorem nRect : forall (A : Type) (n n0 : nat) (v : Vector A n), n0 = BinInt.Z.to_nat(to_Z(vect_length_int v)) ->
                                                           n = BinInt.Z.to_nat(to_Z(vect_length_int v)) ->
                                                           n0 = n.
@@ -421,7 +443,7 @@ Proof.
   easy.
 Qed.
 
-Theorem zip_with_vect_init : forall (A B C : Type) {n : nat}
+Theorem zip_with_vect_init : forall {A B C : Type} {n : nat}
           (v1 : Vector A n)
           (v2 : Vector B n)
           (f : A -> B -> C),
@@ -439,27 +461,49 @@ Proof.
   apply prf.
 Qed.
 
+Theorem map_vect_init : forall {A B : Type} {n : nat}
+          (v : Vector A n)
+          (f : A -> B),
+          Vector B n.
+Proof.
+  intros.
+  destruct v eqn:E.
+  eapply (@vect B
+              (make (vect_length_int v)
+                    (f (vect_default v)))).
+  rewrite length_make.
+  rewrite vect_leb_length.
+  rewrite E.
+  simpl.
+  apply prf.
+Qed.
+
 Print zip_with_vect_init.
 
-Definition vect_plus {n : nat} (v1 : Vector int n) (v2 : Vector int n) : Vector int n :=
-  zip_with_vect int int int v1 v2 (add).
-Theorem 
+
+Definition zip_with_vect {A B C : Type} {n : nat} (v1 : Vector A n) (v2 : Vector B n) (f : A -> B -> C) : Vector C n :=
+  zip_with_vect_on v1 v2 f (zip_with_vect_init v1 v2 f).
+
+Definition map_vect {A B : Type} {n : nat} (v: Vector A n) ( f: A -> B) : Vector B n :=
+  map_vect_on v f (map_vect_init v f).
+
+Definition vect_plus {n : nat} {A: Type} `{F: Field A} (v1 : Vector A n) (v2 : Vector A n) : Vector A n :=
+  zip_with_vect v1 v2 plus.
+
+Definition vect_elem_mult {n : nat} {A : Type} `{F: Field A} (v1 : Vector A n) (v2 : Vector A n) : Vector A n :=
+  zip_with_vect v1 v2 mult.
+
+Definition vect_dot_product {n : nat} {A : Type} `{F : Field A} (v1 : Vector A n) (v2 : Vector A n) : A :=
+  fold_vect (zip_with_vect v1 v2 mult) plus zero.
+
+Definition vect_add_inv {n : nat} {A : Type} `{F : Field A} (v : Vector A n) : Vector A n :=
+  map_vect v add_inv.
+
+Definition vect_sub {n : nat} {A : Type} `{F : Field A} (v1 : Vector A n) (v2: Vector A n) : Vector A n :=
+  vect_plus v1 (vect_add_inv v2).
 
 
-Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) : Vector C n :=
-  match v1 with
-  | @vect _ arr n0 prf =>
-    let c := f (vect_default v1) (vect_default v2) in
-                          match vect_length_make with
-                            _ => 
-                            zip_with_vect_on v1 v2 f
-                                             (@vect C
-                                                    (make (vect_length_int (vect A arr)) c)
-                                                    n
-                                                    (zip_with_lemma A C n arr (vect A arr) c prf))
-                          end
 
-  end.
 
 
 Lemma fold_vect0 : fold_vect (make_vect (make 3 3)) (plus) 0 = 9.
