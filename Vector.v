@@ -9,9 +9,20 @@ Inductive Vector {A : Type} : A -> Int63.int -> Type :=
 | Hello (ar : array A) : (array A) -> Vector A (length ar).
 *)                               
 
+Check (eq_refl).
+
+
+Theorem test2 : forall n : { y : nat | y = 3 },
+                n = n.
+Proof.
+  intros.
+  destruct n.
+Abort.
+
+  
 
 Inductive Vector (A : Type) : nat -> Type :=
-| vect (arr : array A) {n : nat} {prf : n = BinInt.Z.to_nat(to_Z(length arr))}  :
+| vect (arr : array A) {n : nat} {prf : n = BinInt.Z.to_nat((to_Z(length arr)))}  :
     Vector A n.
 
 Definition vect_make {A : Type} (arr : array A) : Vector A (BinInt.Z.to_nat(to_Z(length arr))) :=
@@ -369,7 +380,8 @@ Fixpoint fold_vect_helper {A B : Type} {n: nat} (v : Vector A n) (f : A -> B -> 
   end.
 Search "to_int".
 
-Definition fold_vect {A B: Type} {n: nat} (v: Vector A n) (f: A -> B -> B) (base: B) := fold_vect_helper v f base n (0%int63).
+Definition fold_vect {A B: Type} {n: nat} (v: Vector A n) (f: A -> B -> B) (base: B) :=
+  fold_vect_helper v f base n (0%int63).
 
 
 Fixpoint zip_with_vect_helper {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) (tgt: Vector C n) (cnt: nat) (idx: int) : Vector C n :=
@@ -384,7 +396,11 @@ Definition zip_with_vect_on {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector 
   zip_with_vect_helper v1 v2 f tgt n (0%int63).
 
 
-Lemma zip_with_lemma (A C: Type) n (arr : array A) (v1: Vector A n) (c: C): n = BinInt.Z.to_nat(to_Z(length arr)) -> n = BinInt.Z.to_nat (to_Z (length (make (vect_length_int v1) c))).
+Lemma zip_with_lemma (A C: Type) n
+      (arr : array A)
+      (v1: Vector A n)
+      (c: C):
+  n = BinInt.Z.to_nat(to_Z(length arr)) -> n = BinInt.Z.to_nat (to_Z (length (make (vect_length_int v1) c))).
 Proof.
   intros.
   simpl.
@@ -394,12 +410,53 @@ Proof.
   rewrite leb_length.
   assumption.
 Qed.
-Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) :=
+
+Theorem nRect : forall (A : Type) (n n0 : nat) (v : Vector A n), n0 = BinInt.Z.to_nat(to_Z(vect_length_int v)) ->
+                                                          n = BinInt.Z.to_nat(to_Z(vect_length_int v)) ->
+                                                          n0 = n.
+Proof.
+  intros.
+  destruct v.
+  rewrite H0.
+  easy.
+Qed.
+
+Theorem zip_with_vect_init : forall (A B C : Type) {n : nat}
+          (v1 : Vector A n)
+          (v2 : Vector B n)
+          (f : A -> B -> C),
+          Vector C n.
+Proof.
+  intros.
+  destruct v1 eqn:E.
+  eapply (@vect C
+              (make (vect_length_int v1)
+                    (f (vect_default v1) (vect_default v2)))).
+  rewrite length_make.
+  rewrite vect_leb_length.
+  rewrite E.
+  simpl.
+  apply prf.
+Qed.
+
+Print zip_with_vect_init.
+
+Definition vect_plus {n : nat} (v1 : Vector int n) (v2 : Vector int n) : Vector int n :=
+  zip_with_vect int int int v1 v2 (add).
+Theorem 
+
+
+Definition zip_with_vect {A B C: Type} {n: nat} (v1: Vector A n) (v2: Vector B n) (f: A -> B -> C) : Vector C n :=
   match v1 with
-  | @vect _ arr n0 prf =>  let c := f v1.[0%int63] v2.[0%int63] in
+  | @vect _ arr n0 prf =>
+    let c := f (vect_default v1) (vect_default v2) in
                           match vect_length_make with
                             _ => 
-                            zip_with_vect_on v1 v2 f (@vect C (make (vect_length_int (vect A arr)) c) n (zip_with_lemma A C n arr (vect A arr) c prf))
+                            zip_with_vect_on v1 v2 f
+                                             (@vect C
+                                                    (make (vect_length_int (vect A arr)) c)
+                                                    n
+                                                    (zip_with_lemma A C n arr (vect A arr) c prf))
                           end
 
   end.
