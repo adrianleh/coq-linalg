@@ -417,4 +417,10 @@ Definition vect_sub {n : nat} {A : Type} `{F : Field A} (v1 : Vector A n) (v2: V
   vect_plus v1 (vect_add_inv v2).
 
 
+Notation "< A , B >" := (vect_dot_product A B) (at level 70, no associativity).
+Notation "A + B" := (vect_plus A B) (at level 50, left associativity).
+Notation "A - B" := (vect_sub A B) (at level 50, left associativity).
+Notation "A * B" := (vect_elem_mult A B) (at level 40, left associativity).
+Notation "- A" := (vect_add_inv A) (at level 35, right associativity).
+
 
