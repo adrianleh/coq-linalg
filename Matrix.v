@@ -5,7 +5,6 @@ From LinAlg Require Export Vector.
 
 
 Definition Matrix (A: Type) (n m : nat) := Vector (Vector A m) n.
-(* TODO: Matrix transpose and matrix mult *)
 
 Definition matrix_get {A : Type} {n m : nat} (mat : Matrix A n m) (i j : int) : A :=
   mat.[i].[j].
@@ -35,21 +34,29 @@ Fixpoint matrix_transpose_on_helper {A : Type} {n m: nat} (nj : nat) (i j : int)
   end.
 
 Definition matrix_transpose_on {A : Type} {n m : nat} (mat : Matrix A n m) (tgt : Matrix A m n) :=
-  matrix_transpose_on_helper (m - 1) ((vect_length_int mat) - 1%int63) ((vect_length_int (mat.[0%int63] (* Maybe replace with ))) - 1%int63) 
+  matrix_transpose_on_helper (m - 1) ((vect_length_int mat) - 1%int63) ((vect_length_int (mat.[0%int63] (* Maybe replace with default *))) - 1%int63) mat tgt.
 
-
-
-
-
-Fixpoint matrix_transpose_on_helper {A : Type} {n m : nat} (ni nj : nat) (i j : int) (mat : Matrix A n m) (tgt : Matrix A m n) : Matrix A m n :=
-  match ni,nj  with
-  |  0,0 => tgt
-  |  0, S nj' => matrix_transpose_on_helper (ni - 1) nj' ((vect_length_int mat) - 1%int63) (j - 1%int63) mat (matrix_transpose_el_on i j mat tgt)
-  |  S ni', 0 => matrix_transpose_on_helper (ni') 0 (i - 1%int63) 0 mat (matrix_transpose_el_on i j mat tgt)
-  |  S ni', S nj' => matrix_transpose_on_helper ni' nj' (i - 1%int63) (j - 1%int63) mat (matrix_transpose_el_on i j mat tgt)
+Fixpoint matrix_mult_single_rc_helper {A : Type} `{F : Field A} {n m l : nat} (ni : nat) (i c1 c2: int) (acc : A) (mat1 : Matrix A n m) (mat2 : Matrix A m l) : A :=
+  match ni with
+  | 0 => plus acc (mult mat1.[c1, i] mat2.[i, c2])
+  | S ni' => matrix_mult_single_rc_helper ni' (i-1%int63) c1 c2 (plus acc (mult mat1.[c1,i] mat2.[i,c2])) mat1 mat2
   end.
 
+Definition matrix_mult_single_rc {A : Type} `{F : Field A} {n m l : nat} (c1 c2 : int) (mat1 : Matrix A n m) (mat2 : Matrix A m l) : A :=
+  matrix_mult_single_rc_helper (m-1) ((vect_length_int mat2) - 1%int63) c1 c2 zero mat1 mat2.
 
+Fixpoint matrix_mult_col_on { A : Type} `{F : Field A} {n m l : nat} (ni : nat) (i j :  int) (mat1 : Matrix A n m) (mat2 : Matrix A m l) (tgt : Matrix A n l) : Matrix A n l :=
+  match ni with
+  | 0 => tgt.[i,j <- (matrix_mult_single_rc i j mat1 mat2)]
+  | S ni' => matrix_mult_col_on (ni') (i - 1%int63) j mat1 mat2 (tgt.[i,j <- (matrix_mult_single_rc i j mat1 mat2)])
+  end.
 
+Fixpoint matrix_mult_on_helper {A : Type} `{F : Field A} {n m l: nat} (nj : nat) (i j : int) (mat1 : Matrix A n m) (mat2 : Matrix A m l) (tgt : Matrix A n l) : Matrix A n l :=
+  match nj with
+  | 0 => matrix_mult_col_on (n-1) i j mat1 mat2 tgt
+  | S nj' => matrix_mult_on_helper nj' (i-1%int63) j mat1 mat2 (matrix_mult_col_on (n-1) i j mat1 mat2 tgt)
+  end.
 
+Definition matrix_mult_on {A : Type} `{F : Field  A} {n m l : nat} (mat1 : Matrix A n m) (mat2 : Matrix A m l) (tgt : Matrix A n l) : Matrix A n l :=
   
+                           
