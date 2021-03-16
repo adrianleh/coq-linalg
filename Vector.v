@@ -17,9 +17,9 @@ Inductive Vector (A : Type) : nat -> Type :=
 | vect (arr : array A) {n : nat} {prf : n = BinInt.Z.to_nat((to_Z(length arr)))}  :
     Vector A n.
 
+
 Definition vect_make {A : Type} (arr : array A) : Vector A (BinInt.Z.to_nat(to_Z(length arr))) :=
   @vect _ arr (BinInt.Z.to_nat((to_Z(length arr)))) (eq_refl).
-
 
 Definition vect_default {A : Type} {n : nat} (v : Vector A n) :=
   match v with
@@ -413,14 +413,28 @@ Definition vect_dot_product {n : nat} {A : Type} `{F : Field A} (v1 : Vector A n
 Definition vect_add_inv {n : nat} {A : Type} `{F : Field A} (v : Vector A n) : Vector A n :=
   map_vect v add_inv.
 
+Definition vect_mult_inv {n : nat} {A : Type} `{F : Field A} (v : Vector A n) : Vector A n :=
+  map_vect v mult_inv.
+
 Definition vect_sub {n : nat} {A : Type} `{F : Field A} (v1 : Vector A n) (v2: Vector A n) : Vector A n :=
   vect_plus v1 (vect_add_inv v2).
 
 
 Notation "< A , B >" := (vect_dot_product A B) (at level 70, no associativity).
-Notation "A + B" := (vect_plus A B) (at level 50, left associativity).
-Notation "A - B" := (vect_sub A B) (at level 50, left associativity).
-Notation "A * B" := (vect_elem_mult A B) (at level 40, left associativity).
-Notation "- A" := (vect_add_inv A) (at level 35, right associativity).
+Notation "A +@ B" := (vect_plus A B) (at level 50, left associativity).
+Notation "A -@ B" := (vect_sub A B) (at level 50, left associativity).
+Notation "A *@ B" := (vect_elem_mult A B) (at level 40, left associativity).
+Notation "-@ A" := (vect_add_inv A) (at level 35, right associativity).
 
+Local Open Scope int63_scope.
+Lemma vect_make_make_length: forall A n i (i_bnd: i <=? max_length = true) (prf: n = BinInt.Z.to_nat(to_Z(i))) (a : A), vect_length(vect_make (make i a)) = n.
+Proof.
+  intros.
+  rewrite prf.
+  unfold vect_length. 
+  rewrite length_make.
+  rewrite i_bnd.
+  easy.
+Qed.
+Local Close Scope int63_scope.
 

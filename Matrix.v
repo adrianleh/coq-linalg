@@ -58,5 +58,28 @@ Fixpoint matrix_mult_on_helper {A : Type} `{F : Field A} {n m l: nat} (nj : nat)
   end.
 
 Definition matrix_mult_on {A : Type} `{F : Field  A} {n m l : nat} (mat1 : Matrix A n m) (mat2 : Matrix A m l) (tgt : Matrix A n l) : Matrix A n l :=
-  
-                           
+  matrix_mult_on_helper (l - 1) (vect_length_int mat1) (vect_length_int (mat2.[0%int63])) mat1 mat2 tgt.
+
+Fixpoint matrix_add_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (i : int) (mat1 : Matrix A n m) (mat2 : Matrix A n m) (tgt : Matrix A n m) : Matrix A n m :=
+  match ni with
+  | 0 => tgt.[i <- (mat1.[i] +@ mat2.[i])]
+  | S ni' => matrix_add_on_helper ni' (i - 1%int63) mat1 mat2 (tgt.[i <- mat1.[i] +@ mat2.[i]])
+  end.
+
+Definition matrix_add_on {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m) (tgt: Matrix A n m) : Matrix A n m :=
+  matrix_add_on_helper (vect_length mat1 - 1) ((vect_length_int mat1) - 1%int63) mat1 mat2 tgt.
+
+
+Fixpoint matrix_add_inv_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (i : int) (mat : Matrix A n m) (tgt : Matrix A n m) : Matrix A n m :=
+  match ni with
+  | 0 => tgt.[i <- (-@ mat.[i])]
+  | S ni' => matrix_add_inv_on_helper ni' (i - 1%int63) mat (tgt.[i <- -@ mat.[i]])
+  end.
+
+Definition matrix_add_inv_on {A : Type} `{F : Field A} {n m : nat} (mat : Matrix A n m) (tgt: Matrix A n m) : Matrix A n m :=
+  matrix_add_inv_on_helper (vect_length mat - 1) ((vect_length_int mat) - 1%int63) mat tgt.
+
+Definition matrix_sub_on {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m) (tgt: Matrix A n m) : Matrix A n m :=
+  matrix_add_on mat1 (matrix_add_inv_on mat2 tgt) tgt.
+
+
