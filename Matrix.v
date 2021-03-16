@@ -78,6 +78,18 @@ Notation "t .[ i , j ]" := (matrix_get t i j)
 Notation "t .[ i , j <- a ]" := (matrix_set t i j a)
   (at level 2, left associativity, format "t .[ i , j <- a ]").
 
+Definition matrix_get_row {A : Type} {n m : nat} (i : int) (mat : Matrix A n m) : Vector A m :=
+  mat.[i].
+
+
+Notation "t .[ i , '_' ]" := (matrix_get_row t i)
+                             (at level 2, left associativity, format "t .[ i , '_' ]").
+
+(*Definition matrix_get_col {A : Type} {n m : nat} (i : int) (mat : Matrix A n m) : Vector A n :=
+  matrix_get_row (matrix_transpose mat) i.
+Notation "t .[ '_' , i ]" := (matrix_get_col t i)
+                             (at level 2, left associativity, format "t .[ '_' , i ]"). *)
+
 
 Definition matrix_transpose_el_on {A : Type} {n m : nat} (i j : int) (mat: Matrix A n m) (tgt: Matrix A m n) : Matrix A m n :=
   tgt.[j,i <- mat.[i,j]].
@@ -150,19 +162,26 @@ Definition matrix_sub_on {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A 
 Definition matrix_sub {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m) : Matrix A n m :=
   matrix_sub_on mat1 mat2 (matrix_on_init (fun x y => zero) mat1 mat2).
 
+Fixpoint shave_vector_on_helper {A : Type} {n : nat} (v : Vector A (n+1)) (tgt : Vector A n) (ni : nat) (i : int) : Vector A n :=
+  let new_tgt := tgt.[i <- v.[i + 1%int63]] in
+  match ni with
+  | 0 => new_tgt
+  | S ni' => shave_vector_on_helper v new_tgt ni' (i-1%int63)
+  end.
 
-Fixpoint grow_vector_helper  {A : Type} {n : nat}
+Definition shave_vector_on {A : Type} {n : nat} (v : Vector A (n+1)) (tgt : Vector A n) : Vector A n := shave_vector_on_helper v tgt (n-1) (vect_length_int v - 1%int63).
+
+
+Fixpoint grow_vector_on_helper  {A : Type} {n : nat}
                                          (v : Vector A n)
                                          (tgt : Vector A (n + 1))
                                          (ni : nat) (i : int) : Vector A (n+1) :=
   match ni with
   | 0   => tgt.[1%int63 <- v.[0%int63]]
-  | S k => grow_vector_helper v (tgt.[i+1%int63 <- v.[i]]) (k) (i-1%int63)
+  | S k => grow_vector_on_helper v (tgt.[i+1%int63 <- v.[i]]) (k) (i-1%int63)
   end.
-                                                     
 
-Definition grow_vector {A : Type} {n : nat} (v : Vector A n) (a : A) (tgt : Vector A (n + 1)) :=
-  grow_vector_helper v (tgt.[0%int63 <- a]) n (vect_length_int v - 1%int63).
+
 
 
 Theorem shave_vec_init : forall {A : Type} {n : nat} (v : Vector A (S n)), Vector A n.
@@ -177,19 +196,20 @@ Theorem shave_vec_init : forall {A : Type} {n : nat} (v : Vector A (S n)), Vecto
     simpl.
     subst.
     Admitted.
-    
-
-Search append.
-
-Fixpoint grow_matrix_helper {A : Type} {n m : nat} (mat : Matrix A n m)
-         
 
 
-         
-Definition grow_matrix {A : Type} {n m : nat} (mat : Matrix A n m)
-           (top : Vector A n) (left : Vector A m) (corner : A)
+Definition grow_vector_on {A : Type} {n : nat} (v : Vector A n) (a : A) (tgt : Vector A (n + 1)) :=
+  grow_vector_on_helper v (tgt.[0%int63 <- a]) n (vect_length_int v - 1%int63).
+
+Fixpoint grow_matrix_on_helper {A : Type} {n m : nat} (ni : nat) (i : int) (top_vec : Vector A (n+1)) (mat : Matrix A (n+1) m) (tgt : Matrix A (n+1) (m+1)) :=
+  let new_tgt := tgt.[i <- grow_vector_on (mat.[i]) (top_vec.[i]) (vect_copy (tgt.[0%int63]))] in
+    match ni with
+    | 0 => new_tgt
+    | S ni' => grow_matrix_on_helper ni' (i - 1%int63) top_vec mat new_tgt
+    end.
+
+Definition grow_matrix_on {A : Type} {n m : nat} (mat : Matrix A n m)
+           (top_vec : Vector A n) (left_vec : Vector A m) (corner_el : A)
            (tgt : Matrix A (n+1) (m+1)) : Matrix A (n + 1) (m + 1) :=
-
-  
-
+  grow_matrix_on_helper ((n + 1) - 1) ((vect_length_int tgt) - 1%int63)  (grow_vector_on top_vec corner_el _) (grow_vector_on mat left_vec _) tgt.
 
