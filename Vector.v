@@ -457,8 +457,14 @@ Proof.
   assert (Bool.reflect (BinInt.Z.le (to_Z a) (to_Z c)) true).
   constructor.
   assumption.
-  Search (Bool.reflect (BinInt.Z.le _ _)).
   assert (Bool.reflect (BinInt.Z.le (to_Z a) (to_Z c)) (a <=? c)).
+  apply lebP.
+  inversion H3.
+  reflexivity.
+  inversion H2.
+  auto.
+Qed.
+
 Local Close Scope int63_scope.
 
 
