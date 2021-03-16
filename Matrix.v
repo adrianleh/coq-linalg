@@ -6,6 +6,28 @@ From LinAlg Require Export Vector.
 
 Definition Matrix (A: Type) (n m : nat) := Vector (Vector A m) n.
 
+
+
+Theorem matrix_on_init : forall {A B C : Type} {n m : nat}
+                           (f : A -> B -> C)
+                           (m1 : Matrix A n m)
+                           (m2 : Matrix B n m), Matrix C n m.
+Proof.
+  intros.
+  destruct m1 eqn:E.
+  apply vect with (make
+                     (vect_length_int m1)
+                     (zip_with_vect_init
+                        (vect_default m1)
+                        (vect_default m2)
+                        f)).
+  rewrite length_make.
+  rewrite vect_leb_length.
+  rewrite E.
+  simpl.
+  apply prf.
+Qed.
+
 Definition matrix_get {A : Type} {n m : nat} (mat : Matrix A n m) (i j : int) : A :=
   mat.[i].[j].
 
@@ -60,7 +82,8 @@ Fixpoint matrix_mult_on_helper {A : Type} `{F : Field A} {n m l: nat} (nj : nat)
 Definition matrix_mult_on {A : Type} `{F : Field  A} {n m l : nat} (mat1 : Matrix A n m) (mat2 : Matrix A m l) (tgt : Matrix A n l) : Matrix A n l :=
   matrix_mult_on_helper (l - 1) (vect_length_int mat1) (vect_length_int (mat2.[0%int63])) mat1 mat2 tgt.
 
-Fixpoint matrix_add_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (i : int) (mat1 : Matrix A n m) (mat2 : Matrix A n m) (tgt : Matrix A n m) : Matrix A n m :=
+Fixpoint matrix_add_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (i : int)
+         (mat1 : Matrix A n m) (mat2 : Matrix A n m) (tgt : Matrix A n m) : Matrix A n m :=
   match ni with
   | 0 => tgt.[i <- (mat1.[i] +@ mat2.[i])]
   | S ni' => matrix_add_on_helper ni' (i - 1%int63) mat1 mat2 (tgt.[i <- mat1.[i] +@ mat2.[i]])
@@ -68,6 +91,9 @@ Fixpoint matrix_add_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (
 
 Definition matrix_add_on {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m) (tgt: Matrix A n m) : Matrix A n m :=
   matrix_add_on_helper (vect_length mat1 - 1) ((vect_length_int mat1) - 1%int63) mat1 mat2 tgt.
+
+Definition matrix_add {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m): Matrix A n m :=
+  matrix_add_on mat1 mat2 (matrix_on_init (fun x y => zero) mat1 mat2).
 
 
 Fixpoint matrix_add_inv_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (i : int) (mat : Matrix A n m) (tgt : Matrix A n m) : Matrix A n m :=
@@ -81,5 +107,33 @@ Definition matrix_add_inv_on {A : Type} `{F : Field A} {n m : nat} (mat : Matrix
 
 Definition matrix_sub_on {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m) (tgt: Matrix A n m) : Matrix A n m :=
   matrix_add_on mat1 (matrix_add_inv_on mat2 tgt) tgt.
+
+Definition matrix_sub {A : Type} `{F : Field A} {n m : nat} (mat1 : Matrix A n m) (mat2: Matrix A n m) : Matrix A n m :=
+  matrix_sub_on mat1 mat2 (matrix_on_init (fun x y => zero) mat1 mat2).
+
+
+Fixpoint grow_vector_helper  {A : Type} {n : nat}
+                                         (v : Vector A n)
+                                         (tgt : Vector A (n + 1))
+                                         (ni : nat) (i : int) : Vector A (n+1) :=
+  match ni with
+  | 0   => tgt.[1%int63 <- v.[0%int63]]
+  | S k => grow_vector_helper v (tgt.[i+1%int63 <- v.[i]]) (k) (i-1%int63)
+  end.
+                                                     
+
+Definition grow_vector {A : Type} {n : nat} (v : Vector A n) (a : A) (tgt : Vector A (n + 1)) :=
+  grow_vector_helper v (tgt.[0%int63 <- a]) n (vect_length_int v - 1%int63).
+
+Fixpoint grow_matrix_helper {A : Type} {n m : nat} (mat : Matrix A n m)
+         
+
+
+         
+Definition grow_matrix {A : Type} {n m : nat} (mat : Matrix A n m)
+           (top : Vector A n) (left : Vector A m) (corner : A)
+           (tgt : Matrix A (n+1) (m+1)) : Matrix A (n + 1) (m + 1) :=
+
+  
 
 
