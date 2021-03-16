@@ -436,5 +436,30 @@ Proof.
   rewrite i_bnd.
   easy.
 Qed.
+
+Lemma leb_trans: forall (a b c : int), (a <=? b = true) /\ (b <=? c =true) -> (a <=? c = true).
+Proof.
+  intros.
+  destruct H as [Hab Hbc].
+  Search "lebP".
+  assert (Bool.reflect (BinInt.Z.le (to_Z a) (to_Z b)) true) as Hab'.
+  rewrite <- Hab.
+  apply lebP.
+  assert (Bool.reflect (BinInt.Z.le (to_Z b) (to_Z c)) true) as Hbc'.
+  rewrite <- Hbc.
+  apply lebP.
+  inversion Hab'.
+  inversion Hbc'.
+  assert (BinInt.Z.le (to_Z a) (to_Z c)).
+  eapply BinInt.Z.le_trans.
+  apply H.
+  apply H0.
+  assert (Bool.reflect (BinInt.Z.le (to_Z a) (to_Z c)) true).
+  constructor.
+  assumption.
+  Search (Bool.reflect (BinInt.Z.le _ _)).
+  assert (Bool.reflect (BinInt.Z.le (to_Z a) (to_Z c)) (a <=? c)).
 Local Close Scope int63_scope.
+
+
 
