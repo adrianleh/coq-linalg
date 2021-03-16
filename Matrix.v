@@ -28,6 +28,45 @@ Proof.
   apply prf.
 Qed.
 
+Lemma transpose_on_lemma2 : forall {A : Type} {n m : nat}
+                             (mat : Matrix A n m), Vector A m.
+Proof.
+  intros.
+  apply (vect_default mat).
+Qed.
+
+Lemma transpose_on_lemma : forall {A : Type} {n m :nat}
+                              (mat : Matrix A n m), Vector A n.
+Proof.
+  intros.
+  destruct mat eqn:E.
+  apply vect with (make
+                     (vect_length_int mat)
+                     (vect_default (vect_default mat))).
+  rewrite length_make.
+  rewrite vect_leb_length.
+  rewrite E.
+  apply prf.
+Qed.  
+
+Theorem transpose_on_init : forall {A : Type} {n m : nat}
+                              (mat : Matrix A n m), Matrix A m n.
+Proof.
+  intros.
+  destruct mat eqn:E.
+  remember (default arr) as vdef.
+  unfold Matrix.
+  apply vect with (make
+                     (vect_length_int vdef)
+                     (transpose_on_lemma mat)).
+  rewrite length_make.
+  rewrite vect_leb_length.
+  destruct vdef.
+  simpl.
+  apply prf0.
+Qed.
+
+
 Definition matrix_get {A : Type} {n m : nat} (mat : Matrix A n m) (i j : int) : A :=
   mat.[i].[j].
 
@@ -124,6 +163,23 @@ Fixpoint grow_vector_helper  {A : Type} {n : nat}
 
 Definition grow_vector {A : Type} {n : nat} (v : Vector A n) (a : A) (tgt : Vector A (n + 1)) :=
   grow_vector_helper v (tgt.[0%int63 <- a]) n (vect_length_int v - 1%int63).
+
+
+Theorem shave_vec_init : forall {A : Type} {n : nat} (v : Vector A (S n)), Vector A n.
+  intros.
+  apply vect with (make
+                     (vect_length_int v - 1)
+                     (vect_default v)).
+  rewrite length_make.
+  rewrite leb_trans with (sub (vect_length_int v) 1%int63) (vect_length_int v) (max_length).
+  - remember (S n) as k.
+    destruct v eqn:E.
+    simpl.
+    subst.
+    Admitted.
+    
+
+Search append.
 
 Fixpoint grow_matrix_helper {A : Type} {n m : nat} (mat : Matrix A n m)
          
