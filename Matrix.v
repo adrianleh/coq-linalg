@@ -391,3 +391,26 @@ Fixpoint matrix_copy_helper {A : Type} {n m : nat} (ni : nat) (i : int) (mat : M
 
 Definition matrix_copy {A : Type} {n m : nat} (mat : Matrix A n m) : Matrix A n m :=
   matrix_copy_helper (n-1) (vect_length_int mat - 1%int63) (vect_copy mat).
+
+Definition LU_decomp {A : Type} `{F : Field A} {n : nat} (M : Square A n) :=
+  LU_decomp_with M (L (matrix_copy M)) (U (matrix_copy M)).
+
+Theorem LU_decomp_correct: forall {A : Type} `{F: Field A} n (M : Square A n), let (L, U) := LU_decomp M in matrix_mult_on L U (matrix_copy M) = M.
+Proof.
+  intros.
+  induction n.
+  - unfold LU_decomp.
+    unfold matrix_copy.
+    unfold matrix_copy_helper.
+    simpl.
+    unfold L_Col_Update.
+    unfold L_Col_Update_Setter.
+    simpl.
+    unfold L.
+    unfold U.
+    unfold L_Setter.
+    unfold U_Setter.
+    simpl.
+    unfold matrix_mult_on.
+    unfold matrix_copy_helper.
+    simpl.
