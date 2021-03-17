@@ -326,7 +326,6 @@ Fixpoint L_Col_Update_Setter {A : Type} `{F : Field A} {n : nat}
                                                 (mult_inv M.[ currentCol, currentCol ]) ])
                               k (tgtRow - 1%int63) currentCol
   end.
-                                
 
 Definition L_Col_Update  {A : Type} `{F : Field A} {n : nat} (offset : nat) (currentCol : int)
                                      (M : Square A n) (L : Square A n) : Square A n :=
@@ -349,8 +348,36 @@ Definition U_Row_Update {A : Type} `{F : Field A} {n : nat} (offset : nat) (curr
   U_Row_Update_Setter M L (n - offset - 1) (vect_length_int M - 1%int63) (currentRow).
 
 
+Fixpoint M_Block_Update_Inner_Setter {A : Type} `{F : Field A} {n : nat} (nj : nat) (j : int) (i : int) (k : int) (M L U : Square A n) : Square A n :=
+  let new_M := M.[i, j <- (plus (M.[i,j]) (add_inv (mult L.[i,k] U.[k,j])))] in
+  match nj with
+  | 0 => new_M
+  | S nj' => M_Block_Update_Inner_Setter nj' (j - 1%int63) i k new_M L U
+  end.
+
+Definition M_Block_Update_Inner {A : Type} `{F : Field A} {n : nat} (i : int) (nk : nat) (k : int) (M L U : Square A n) : Square A n :=
+  M_Block_Update_Inner_Setter (n - nk -1) (vect_length_int M - 1%int63) i k M L U.
+
+Fixpoint M_Block_Update_Outer_Run {A : Type} `{F : Field A} {n : nat} (i : int) (ni nk : nat) (k : int) (M L U : Square A n) : Square A n :=
+  let new_M := M_Block_Update_Inner i nk k M L U in
+  match ni with
+  | 0 => new_M
+  | S ni' => M_Block_Update_Outer_Run (i - 1%int63) ni' nk k new_M L U
+  end.
+
+Definition M_Block_Update_Outer {A : Type} `{F : Field A} {n : nat} (nk : nat) (k : int) (M L U : Square A n): Square A n :=
+  M_Block_Update_Outer_Run (vect_length_int M - 1%int63) (n-nk-1) nk k M L U.
 
 
+Fixpoint LU_decomp_step {A : Type} `{F : Field A} {n : nat} (nk : nat) (k : int) (M L U : Square A n) :=
+  let U' := U.[k,k <- M.[k,k]] in
+  let L' := L_Col_Update nk k M L in
+  let U'' := U_Row_Update nk k M L in
+  let M' := M_Block_Update_Outer nk k M L' U'' in
+  match nk with
+  | 0 => (L' , U')
+  | S nk' => LU_decomp_step nk' (k - 1%int63) M' L' U''
+  end.
 
-Definition M_Block_Update {A : Type} `{F : Field A} {n : nat} (offset : nat) (pivotPos : int)
-
+Definition LU_decomp_with {A : Type} `{F : Field A} {n : nat} (M L U : Square A n) :=
+  LU_decomp_step (n-1) (vect_length_int M - 1%int63) M L U.
