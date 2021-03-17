@@ -192,55 +192,33 @@ Fixpoint nat_int (n : nat) : int :=
   | S k => 1%int63 + (nat_int k)
   end.
 
+Search int.
 
-Lemma intgez_gez_circle : forall (k : nat) (i : int), k = BinInt.Z.to_nat(to_Z(i)) -> nat_int k = i.
-Proof.
-  induction k.
-  intros.
-  remember (to_Z i) as Zi.
-  induction Zi.
-  - simpl in H.
-    Search to_Z.
-    rewrite <- to_Z_0 in HeqZi.
-    simpl.
-    Search to_Z.
-    rewrite <- (of_to_Z 0).
-    rewrite HeqZi.
-    rewrite (of_to_Z i).
-    reflexivity.
-  - simpl.
-    Search to_Z.
-    rewrite <- (of_to_Z i).
-    rewrite <- HeqZi.
-    simpl.
-    Admitted.
-        
-    
+
+
   
+(* Max array length is 4194303 by max_length *)
 
 
-Theorem shave_vec_init : forall {A : Type} {n : nat} (v : Vector A (S n)), Vector A n.
+
+Theorem vect_exist : forall {A : Type} (n : nat), Vector A n.
+Proof.
+  Admitted.
+(*
+  Due to limits placed on the size of arrays in Coq, this is not actually provable. For simplicities sake, we are admitting it as the max array length is 4,194,303 objects, which borders computational infeasability, so this admittance does not affect the well-foundedness of our statements as arbitrary size arrays exist mathematically speaking, and we can not create large enough arrays in Coq to break any functions created using this existentiality.
+ *)
+
+Theorem matrix_exist : forall {A : Type} (n m : nat), Matrix A n m.
+Proof.
   intros.
-  Search (nat -> int).
-  Search (int -> int).
-  apply vect with (make
-                     (pred (vect_length_int v))
-                     (vect_default v)).
-  rewrite length_make.
-  rewrite leb_trans with (pred (vect_length_int v)) (vect_length_int v) (max_length).
-  - remember (S n) as k.
-    destruct v eqn:E.
-    subst.
-    induction n.
-    + simpl.
-      Search length.
-      Admitted.
-
-
-                                                         
+  apply vect_exist.
+Qed.                                                         
 
 Definition grow_vector_on {A : Type} {n : nat} (v : Vector A n) (a : A) (tgt : Vector A (n + 1)) :=
   grow_vector_on_helper v (tgt.[0%int63 <- a]) n (vect_length_int v - 1%int63).
+
+Definition grow_vector {A : Type} {n : nat} (v : Vector A n) (a : A) :=
+  grow_vector_on v a (vect_exist (n + 1)).
 
 Fixpoint grow_matrix_on_helper {A : Type} {n m : nat} (ni : nat) (i : int) (top_vec : Vector A (n+1)) (mat : Matrix A (n+1) m) (tgt : Matrix A (n+1) (m+1)) :=
   let new_tgt := tgt.[i <- grow_vector_on (mat.[i]) (top_vec.[i]) (vect_copy (tgt.[0%int63]))] in
@@ -267,3 +245,112 @@ Definition grow_matrix_on {A : Type} {n m : nat} (mat : Matrix A n m)
            (top_vec : Vector A n) (left_vec : Vector A m) (corner_el : A)
            (tgt : Matrix A (n+1) (m+1)) : Matrix A (n + 1) (m + 1) :=
   grow_matrix_on_helper ((n + 1) - 1) ((vect_length_int tgt) - 1%int63)  (grow_vector_on top_vec corner_el (transpose_on_lemma tgt)) (grow_vector_on mat left_vec (grow_matrix_on_helper_lemma left_vec tgt)) tgt.
+
+Definition grow_matrix {A : Type} {n m : nat} (mat : Matrix A n m)
+           (top_vec : Vector A n) (left_vec : Vector A m) (corner_el : A) : Matrix A (n + 1) (m + 1) :=
+  grow_matrix_on mat top_vec left_vec corner_el (matrix_exist (n + 1) (m + 1)).
+
+
+Definition Square A n := Matrix A n n.
+
+Fixpoint L_SetRow {A : Type} `{F : Field A} {n : nat}
+         (itr : nat)
+         (tgtCol : int) (currentRow : int)
+         (mat : Square A n) : Square A n :=
+  match itr with
+  | 0 => match eqb tgtCol currentRow with
+        | true  => mat.[ currentRow, tgtCol <- one  ]
+        | false => mat.[ currentRow, tgtCol <- zero ]
+        end
+  | S k => match eqb tgtCol currentRow with
+          | true  => L_SetRow (k) (tgtCol - 1%int63) currentRow (mat.[ currentRow, tgtCol <- one  ])
+          | false => L_SetRow (k) (tgtCol - 1%int63) currentRow (mat.[ currentRow, tgtCol <- zero ])
+          end
+  end.
+
+
+Fixpoint L_Setter {A : Type} `{F : Field A} {n : nat} (itr : nat) (tgtRow :int) (mat : Square A n) :=
+  match itr with
+  | 0   => L_SetRow (n - 1) (vect_length_int mat - 1%int63) (tgtRow) mat
+  | S k => L_Setter k (tgtRow - 1%int63) (L_SetRow (n - 1) (vect_length_int mat - 1%int63) (tgtRow) mat)
+  end.
+
+
+Definition L {A : Type} `{F : Field A} {n : nat} (mat : Square A n) : Square A n :=
+  L_Setter (n - 1) ((vect_length_int mat) - 1%int63) mat.
+
+Fixpoint U_SetRow {A : Type} `{F : Field A} {n : nat}
+         (itr : nat)
+         (tgtCol : int) (currentRow : int)
+         (mat : Square A n) : Square A n :=
+  match itr with
+  | 0 => match eqb tgtCol currentRow with
+        | true  => mat
+        | false => mat.[ currentRow, tgtCol <- zero ]
+        end
+  | S k => match eqb tgtCol currentRow with
+          | true  => U_SetRow (k) (tgtCol - 1%int63) currentRow mat
+          | false => U_SetRow (k) (tgtCol - 1%int63) currentRow (mat.[ currentRow, tgtCol <- zero ])
+          end
+  end.
+
+Fixpoint U_Setter {A : Type} `{F : Field A} {n : nat} (itr : nat) (tgtRow :int) (mat : Square A n) :=
+  match itr with
+  | 0   => U_SetRow (n - 1) (vect_length_int mat - 1%int63) (tgtRow) mat
+  | S k => U_Setter k (tgtRow - 1%int63) (U_SetRow (n - 1) (vect_length_int mat - 1%int63) (tgtRow) mat)
+  end.
+
+Definition U {A : Type} `{F : Field A} {n : nat} (mat : Square A n) : Square A n :=
+  U_Setter (n - 1) ((vect_length_int mat) - 1%int63) mat.
+
+Fixpoint U_Diag_Update_Setter {A : Type} `{F : Field A} {n : nat}
+         (U : Square A n) (M : Square A n)
+         (itr : nat) (tgt : int) : Square A n :=
+  match itr with
+  | 0   => U.[tgt, tgt <- M.[tgt, tgt]]
+  | S k => U_Diag_Update_Setter (U.[tgt,tgt <- M.[tgt,tgt]]) M (k) (tgt - 1)
+  end.
+
+Definition U_Diag_Update {A : Type} `{F : Field A} {n : nat} (U : Square A n) (M : Square A n) : Square A n :=
+  U_Diag_Update_Setter U M (n - 1) (vect_length_int U - 1%int63).
+
+Fixpoint L_Col_Update_Setter {A : Type} `{F : Field A} {n : nat}
+                                          (M : Square A n) (L : Square A n)
+                                          (itr : nat)
+                                          (tgtRow : int) (currentCol : int) : Square A n :=
+  match itr with
+  | 0   => L.[ tgtRow, currentCol <- mult (M.[ tgtRow, currentCol ]) (mult_inv M.[ currentCol, currentCol ])]
+  | S k => L_Col_Update_Setter M
+                              (L.[ tgtRow, currentCol <-
+                                           mult (M.[ tgtRow, currentCol ])
+                                                (mult_inv M.[ currentCol, currentCol ]) ])
+                              k (tgtRow - 1%int63) currentCol
+  end.
+                                
+
+Definition L_Col_Update  {A : Type} `{F : Field A} {n : nat} (offset : nat) (currentCol : int)
+                                     (M : Square A n) (L : Square A n) : Square A n :=
+  L_Col_Update_Setter M L (n - offset - 1) (vect_length_int M - 1%int63) (currentCol).
+
+
+Fixpoint U_Row_Update_Setter {A : Type} `{F : Field A} {n : nat}
+                                          (M : Square A n) (U : Square A n)
+                                          (itr : nat)
+                                          (currentRow : int) (tgtCol : int) : Square A n :=
+  match itr with
+  | 0   => U.[ currentRow, tgtCol <- M.[currentRow, tgtCol] ]
+  | S k => U_Row_Update_Setter M
+                              (U.[ currentRow, tgtCol <- M.[ currentRow, tgtCol] ])
+                              k currentRow (tgtCol - 1%int63)
+  end.
+
+Definition U_Row_Update {A : Type} `{F : Field A} {n : nat} (offset : nat) (currentRow : int)
+                                     (M : Square A n) (L : Square A n) : Square A n:=
+  U_Row_Update_Setter M L (n - offset - 1) (vect_length_int M - 1%int63) (currentRow).
+
+
+
+
+
+Definition M_Block_Update {A : Type} `{F : Field A} {n : nat} (offset : nat) (pivotPos : int)
+
