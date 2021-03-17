@@ -381,3 +381,13 @@ Fixpoint LU_decomp_step {A : Type} `{F : Field A} {n : nat} (nk : nat) (k : int)
 
 Definition LU_decomp_with {A : Type} `{F : Field A} {n : nat} (M L U : Square A n) :=
   LU_decomp_step (n-1) (vect_length_int M - 1%int63) M L U.
+
+Fixpoint matrix_copy_helper {A : Type} {n m : nat} (ni : nat) (i : int) (mat : Matrix A n m) : Matrix A n m :=
+  let cpy := mat.[i <- vect_copy mat.[i]] in
+  match ni with
+  | 0 => cpy
+  | S ni' => matrix_copy_helper ni' (i-1%int63) cpy
+  end.
+
+Definition matrix_copy {A : Type} {n m : nat} (mat : Matrix A n m) : Matrix A n m :=
+  matrix_copy_helper (n-1) (vect_length_int mat - 1%int63) (vect_copy mat).
