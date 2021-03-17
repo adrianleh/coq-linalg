@@ -7,9 +7,17 @@ Class Field A : Type :=
   plus : A -> A -> A;
   zero : A;
   add_inv: A -> A;
+  add_0 : forall (a : A), plus zero a = a;
+  add_comm : forall (a b : A), plus a b = plus b a;
+  add_add_inv : forall (a : A), plus a (add_inv a) = zero;
+  add_assoc : forall (a b c : A), plus a (plus b)
   mult : A -> A -> A;
   one : A;
-  mult_inv: A -> A
+  mult_inv: A -> A;
+  mult_1 : forall (a : A), mult one a = a;
+  mult_comm : forall (a b : A), mult a b = mult b a;
+  mult_mult_inv : forall (a : A), mult a (mult_inv a) = one;
+  mult_distr : forall (a b c : A), mult a (plus b c) = plus (mult a b) (mult b c)
   }.
 
 
