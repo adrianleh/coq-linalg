@@ -22,6 +22,12 @@ Class Field A : Type :=
   }.
 
 
+Fixpoint nat_int (n : nat) : int :=
+  match n with
+  | 0 => 0%int63
+  | S k => 1%int63 + (nat_int k)
+  end.
+
 Inductive Vector (A : Type) : nat -> Type :=
 | vect (arr : array A) {n : nat} {prf : n = BinInt.Z.to_nat((to_Z(length arr)))}  :
     Vector A n.
@@ -495,6 +501,22 @@ Proof.
   auto.
 Qed.
 
+
+Lemma posint_natint_undoes_binint : forall (i : int), (0 <=? i = true) -> nat_int(BinInt.Z.to_nat(to_Z(i))) = i.
+Proof.
+  Admitted.
+
+Theorem vect_nat_int : forall {A : Type} {n : nat} (v : Vector A n), vect_length_int v = nat_int n.
+Proof.
+  intros.
+  destruct v.
+  simpl.
+  subst.
+  rewrite posint_natint_undoes_binint.
+  - reflexivity.
+  - apply arr_length_positive.
+Qed.
+  
 Local Close Scope int63_scope.
 
 
