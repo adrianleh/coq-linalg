@@ -136,7 +136,7 @@ Fixpoint matrix_mult_on_helper {A : Type} `{F : Field A} {n m l: nat} (nj : nat)
   end.
 
 Definition matrix_mult_on {A : Type} `{F : Field  A} {n m l : nat} (mat1 : Matrix A n m) (mat2 : Matrix A m l) (tgt : Matrix A n l) : Matrix A n l :=
-  matrix_mult_on_helper (l - 1) (vect_length_int mat1) (vect_length_int (mat2.[0%int63])) mat1 mat2 tgt.
+  matrix_mult_on_helper (l - 1) (vect_length_int mat1 - 1%int63) (vect_length_int (mat2.[0%int63]) - 1%int63) mat1 mat2 tgt.
 
 Fixpoint matrix_add_on_helper {A : Type} `{F : Field A} {n m : nat} (ni : nat) (i : int)
          (mat1 : Matrix A n m) (mat2 : Matrix A n m) (tgt : Matrix A n m) : Matrix A n m :=
@@ -395,11 +395,108 @@ Definition matrix_copy {A : Type} {n m : nat} (mat : Matrix A n m) : Matrix A n 
 Definition LU_decomp {A : Type} `{F : Field A} {n : nat} (M : Square A n) :=
   LU_decomp_with M (L (matrix_copy M)) (U (matrix_copy M)).
 
-Theorem LU_decomp_correct: forall {A : Type} `{F: Field A} n (M : Square A n), let (L, U) := LU_decomp M in matrix_mult_on L U (matrix_copy M) = M.
+Local Open Scope int63_scope.
+
+Theorem LU_decomp_correct: forall n {A : Type} `{F: Field A} (M : Square A (S n)), let (L, U) := LU_decomp M in matrix_mult_on L U (matrix_copy M) = M.
 Proof.
-  intros.
-  induction n.
-  - unfold LU_decomp.
+  induction n; intros.
+  - remember (LU_decomp M) as LU.
+    destruct LU.
+    unfold matrix_mult_on.
+    unfold matrix_mult_on_helper.
+    simpl.
+    assert (Hs : vect_length_int s = 1%int63).
+    + assert (H : 1 = vect_length_int (vect_make (make 1 1))).
+      * rewrite vect_length_make.
+        compute.
+        reflexivity.
+      * rewrite H.
+        apply vect_length_type_vect_length_int.
+        rewrite length_make.
+        compute.
+        reflexivity.
+    + rewrite Hs.
+      assert (Hm0 : vect_length_int m.[0] = 1).
+      * assert (H : 1 = vect_length_int (vect_make (make 1 1))).
+        -- rewrite vect_length_make.
+           compute.
+           reflexivity.
+        -- rewrite H.
+           apply vect_length_type_vect_length_int.
+           rewrite length_make.
+           compute.
+           reflexivity.
+      * rewrite Hm0.
+        unfold matrix_mult_single_rc.
+        unfold matrix_mult_single_rc_helper.
+        simpl.
+        Print Field.
+        rewrite add_0.
+        assert ( Hm : vect_length_int m = 1).
+        assert (H : 1 = vect_length_int (vect_make (make 1 1))).
+        rewrite vect_length_make;compute;reflexivity.
+        rewrite H.
+        apply vect_length_type_vect_length_int.
+        rewrite length_make.
+        compute.
+        reflexivity.
+        rewrite Hm.
+        assert (EZ : 1 - 1 = 0).
+        easy.
+        rewrite EZ.
+        unfold LU_decomp in HeqLU.
+        unfold LU_decomp_with in HeqLU.
+        simpl in HeqLU.
+        unfold L_Col_Update in HeqLU.
+        unfold L_Col_Update_Setter in HeqLU.
+        simpl in HeqLU.
+        rewrite mult_mult_inv in HeqLU.
+        assert (HM : (vect_length_int M) = 1).
+        --  assert (H : 1 = vect_length_int (vect_make (make 1 1))).
+           ** rewrite vect_length_make.
+              compute.
+              reflexivity.
+           ** rewrite H.
+              apply vect_length_type_vect_length_int.
+              rewrite length_make.
+              compute.
+              reflexivity.
+        -- rewrite HM in HeqLU.
+           rewrite EZ in HeqLU.
+           inversion HeqLU.
+           unfold matrix_get.
+           unfold matrix_set.
+           
+
+
+        unfold LU_decomp
+        compute.
+        rewrite vect_length_make.
+        compute.
+        reflexivity.
+        ++ assert (H : 1 = vect_length_int (vect_make (make 1 1))).
+         rewrite vect_length_make.
+           compute.
+           reflexivity.
+        -- rewrite H.
+           apply vect_length_type_vect_length_int.
+           rewrite length_make.
+           compute.
+           reflexivity.
+        
+    
+      rewrite ((vect_length_make) int 1 (1)).
+      simpl in e.
+      assert (Hb : 1 <=? max_length = true).
+      unfold max_length.
+      compute.
+      reflexivity.
+      
+      
+    
+    apply vect_ext.
+    intros.
+    unfold LU_decomp.
     unfold matrix_copy.
     unfold matrix_copy_helper.
     simpl.
