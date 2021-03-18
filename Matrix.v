@@ -457,6 +457,26 @@ Fixpoint matrix_copy_helper {A : Type} {n m : nat} (ni : nat) (i : int) (mat : M
 Definition matrix_copy {A : Type} {n m : nat} (mat : Matrix A n m) : Matrix A n m :=
   matrix_copy_helper (n-1) (vect_length_int mat - 1%int63) (vect_copy mat).
 
+
+Theorem matrix_copy_eq : forall A n m (M : Matrix A n m), matrix_copy M = M.
+Proof.
+  intros.
+  unfold matrix_copy.
+  rewrite vect_copy_eq.
+  unfold matrix_copy_helper.
+  induction n.
+  - simpl.
+    rewrite vect_copy_eq.
+    Check vect_set_get_id.
+    apply vect_ext.
+    + intros.
+      rewrite vect_set_get_id.
+      reflexivity.
+      admit.
+  -    
+  Admitted.
+  
+
 Definition LU_decomp {A : Type} `{F : Field A} {n : nat} (M : Square A n) :=
   LU_decomp_with M (L (matrix_copy M)) (U (matrix_copy M)).
 
@@ -529,8 +549,112 @@ Proof.
         -- rewrite HM in HeqLU.
            rewrite EZ in HeqLU.
            inversion HeqLU.
-           unfold matrix_get.
-           unfold matrix_set.
+           rewrite matrix_get_set_same.
+           ** rewrite matrix_get_set_same.
+              --- rewrite mult_1.
+                  rewrite matrix_copy_eq.
+                  apply matrix_ext.
+                  intros.
+                  apply matrix_get_set_id.
+                  +++ rewrite HM.
+                      easy.
+                  +++ assert (HM0 : 1 = vect_length_int M.[0]).
+                      *** assert (HM0h : 1 = vect_length_int (vect_make (make 1 1))).
+                          ---- rewrite vect_length_make.
+                               compute.
+                               reflexivity.
+                          ---- rewrite HM0h.
+                               apply vect_length_type_vect_length_int.
+                               rewrite length_make.
+                               compute.
+                               reflexivity.
+                      *** rewrite <- HM0.
+                          easy.
+              --- Check vect_length_type_vect_length_int.
+                  rewrite vect_length_type_vect_length_int with (Vector A 1%nat) (Vector A 1%nat) 1%nat 1%nat (U (matrix_copy M)) M.
+                  rewrite HM; easy.
+                  easy.
+              --- rewrite vect_length_type_vect_length_int with (Vector A 1%nat) (Vector A 1%nat) 1%nat 1%nat (U (matrix_copy M)) M.
+                  rewrite HM; easy.
+                  easy.
+              --- rewrite vect_length_type_vect_length_int with _ _ 1%nat 1%nat (U (matrix_copy M)).[0] M.[0].
+                  +++ assert (HM0 : 1 = vect_length_int M.[0]).
+                      *** assert (HM0h : 1 = vect_length_int (vect_make (make 1 1))).
+                          ---- rewrite vect_length_make.
+                               compute.
+                               reflexivity.
+                          ---- rewrite HM0h.
+                               apply vect_length_type_vect_length_int.
+                               rewrite length_make.
+                               compute.
+                               reflexivity.
+                      *** rewrite <- HM0.
+                          easy.
+                  +++ easy.
+              --- rewrite vect_length_type_vect_length_int with _ _ 1%nat 1%nat (U (matrix_copy M)).[0] M.[0].
+                  +++ assert (HM0 : 1 = vect_length_int M.[0]).
+                      *** assert (HM0h : 1 = vect_length_int (vect_make (make 1 1))).
+                          ---- rewrite vect_length_make.
+                               compute.
+                               reflexivity.
+                          ---- rewrite HM0h.
+                               apply vect_length_type_vect_length_int.
+                               rewrite length_make.
+                               compute.
+                               reflexivity.
+                      *** rewrite <- HM0.
+                          easy.
+                  +++ easy.
+              --- split; easy.
+           ** rewrite vect_length_type_vect_length_int with _ _ 1%nat 1%nat (L (matrix_copy M)) M.
+                  rewrite HM; easy.
+                  easy.
+           ** rewrite vect_length_type_vect_length_int with _ _ 1%nat 1%nat (L (matrix_copy M)) M.
+                  rewrite HM; easy.
+                  easy.
+           ** rewrite vect_length_type_vect_length_int with _ _ 1%nat 1%nat (L (matrix_copy M)).[0] M.[0].
+                  +++ assert (HM0 : 1 = vect_length_int M.[0]).
+                      *** assert (HM0h : 1 = vect_length_int (vect_make (make 1 1))).
+                          ---- rewrite vect_length_make.
+                               compute.
+                               reflexivity.
+                          ---- rewrite HM0h.
+                               apply vect_length_type_vect_length_int.
+                               rewrite length_make.
+                               compute.
+                               reflexivity.
+                      *** rewrite <- HM0.
+                          easy.
+                  +++ easy.
+           ** rewrite vect_length_type_vect_length_int with _ _ 1%nat 1%nat (L (matrix_copy M)).[0] M.[0].
+                  +++ assert (HM0 : 1 = vect_length_int M.[0]).
+                      *** assert (HM0h : 1 = vect_length_int (vect_make (make 1 1))).
+                          ---- rewrite vect_length_make.
+                               compute.
+                               reflexivity.
+                          ---- rewrite HM0h.
+                               apply vect_length_type_vect_length_int.
+                               rewrite length_make.
+                               compute.
+                               reflexivity.
+                      *** rewrite <- HM0.
+                          easy.
+                  +++ easy.
+           ** split; easy.
+  - 
+    
+             
+             
+             
+             
+             
+                
+                
+                    
+                assert (vect_length_int (U (matrix_copy M)) = vect_length_int M).
+                
+                        
+                  
            
 
 
