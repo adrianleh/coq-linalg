@@ -346,6 +346,14 @@ Proof.
   assumption.
 Qed.
 
+Lemma vect_length_int_vect_length_type : forall A B n m (v1 : Vector A n) (v2 : Vector B m), vect_length_int v1 = vect_length_int v2 -> n = m.
+Proof.
+  intros.
+  apply vect_length_int_vect_length in H.
+  apply vect_length_vect_length_type in H.
+  exact H.
+Qed.
+
 Local Close Scope int63_scope.
 
 
