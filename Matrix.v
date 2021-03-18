@@ -73,11 +73,28 @@ Definition matrix_get {A : Type} {n m : nat} (mat : Matrix A n m) (i j : int) : 
 Definition matrix_set {A : Type} {n m : nat} (mat: Matrix A n m)  (i j : int) (a : A) : (Matrix A n m)
   := mat.[i <- (mat.[i].[j <- a])].
 
+
+
 Notation "t .[ i , j ]" := (matrix_get t i j)
   (at level 2, left associativity, format "t .[ i , j ]").
 Notation "t .[ i , j <- a ]" := (matrix_set t i j a)
   (at level 2, left associativity, format "t .[ i , j <- a ]").
+Local Open Scope int63_scope.
+Lemma matrix_get_set_same : forall (A : Type) (n m : nat) (mat : Matrix A n m) (i1 j1 i2 j2 : int) (a : A), (i1 <? vect_length_int mat = true) -> (i2 <? vect_length_int mat = true) -> (j1 <? vect_length_int mat.[i1] = true) -> (j2 <? vect_length_int mat.[i2] = true) -> i1 = i2 /\ j1 = j2 -> mat.[i1,j1 <- a].[i2,j2] = a.
+Proof.
+  intros.
+  unfold matrix_set.
+  unfold matrix_get.
+  inversion H3.
+  subst.
+  rewrite vect_get_set_same.
+  apply vect_get_set_same.
+  assumption.
+  assumption.
+Qed.
+Local Close Scope int63_scope.
 
+  
 Definition matrix_get_row {A : Type} {n m : nat} (i : int) (mat : Matrix A n m) : Vector A m :=
   mat.[i].
 
