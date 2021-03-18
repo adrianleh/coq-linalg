@@ -133,6 +133,14 @@ Axiom vect_ext: forall A n (v1 v2: Vector A n),
     (forall i, i <? vect_length_int v1 = true -> v1.[i] = v2.[i]) ->
     v1 = v2.
 
+Lemma vect_copy_eq : forall A n (v : Vector A n), vect_copy v = v.
+Proof.
+  intros.
+  apply vect_ext.
+  intros.
+  apply vect_get_copy.
+Qed.
+
 Lemma vect_ext_default: forall A n (v1 v2 : Vector A n),
     vect_length_int v1 = vect_length_int v2 ->
     (forall i, i <? vect_length_int v1 = true -> v1.[i] = v2.[i]) ->
