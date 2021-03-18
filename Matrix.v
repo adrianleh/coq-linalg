@@ -79,7 +79,9 @@ Notation "t .[ i , j ]" := (matrix_get t i j)
   (at level 2, left associativity, format "t .[ i , j ]").
 Notation "t .[ i , j <- a ]" := (matrix_set t i j a)
   (at level 2, left associativity, format "t .[ i , j <- a ]").
+
 Local Open Scope int63_scope.
+
 Lemma matrix_get_set_same : forall (A : Type) (n m : nat) (mat : Matrix A n m) (i1 j1 i2 j2 : int) (a : A), (i1 <? vect_length_int mat = true) -> (i2 <? vect_length_int mat = true) -> (j1 <? vect_length_int mat.[i1] = true) -> (j2 <? vect_length_int mat.[i2] = true) -> i1 = i2 /\ j1 = j2 -> mat.[i1,j1 <- a].[i2,j2] = a.
 Proof.
   intros.
@@ -92,6 +94,42 @@ Proof.
   assumption.
   assumption.
 Qed.
+
+Lemma matrix_get_set_id : forall A n m (mat : Matrix A n m) (i1 i2 j1 j2 : int), (i1 <? vect_length_int mat = true) -> (j1 <? vect_length_int mat.[i1] = true) -> mat.[i1,j1 <- mat.[i1,j1]].[i2,j2] = mat.[i2, j2].
+Proof.
+  intros.
+  unfold matrix_get, matrix_set.
+  destruct (eqb i1 i2) eqn:Eqi; destruct (eqb j1 j2) eqn:Eqj.
+  + apply eqb_spec in Eqi.
+    apply eqb_spec in Eqj.
+    subst.
+    rewrite vect_get_set_same.
+    rewrite vect_get_set_same.
+    reflexivity.
+    easy.
+    easy.
+  + apply eqb_spec in Eqi.
+    apply eqb_false_spec in Eqj.
+    subst.
+    rewrite vect_get_set_same.
+    rewrite vect_get_set_other.
+    reflexivity.
+    easy.
+    easy.
+  + apply eqb_false_spec in Eqi.
+    apply eqb_spec in Eqj.
+    subst.
+    rewrite vect_get_set_other.
+    reflexivity.
+    easy.
+  + apply eqb_false_spec in Eqi.
+    apply eqb_false_spec in Eqj.
+    subst.
+    rewrite vect_get_set_other.
+    reflexivity.
+    easy.
+Qed.
+
 Local Close Scope int63_scope.
 
   

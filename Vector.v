@@ -209,6 +209,19 @@ Lemma vect_get_set_other: forall A n (vect: Vector A n) i j (a:A), i <> j -> vec
   assumption.
 Qed.
 
+Lemma vect_set_get_id: forall A n (vect: Vector A n) i j, (i <? vect_length_int vect = true) -> vect.[i <- vect.[i]].[j] = vect.[j].
+Proof.
+  intros.
+  destruct (i =? j) eqn:Eq.
+  + apply eqb_spec in Eq.
+    subst.
+    apply vect_get_set_same.
+    assumption.
+  + apply eqb_false_spec in Eq.
+    apply vect_get_set_other.
+    assumption.
+Qed.  
+
 Lemma vect_get_make: forall A (a : A) size i, (vect_make (make size a)).[i] = a.
 Proof.
   intros.
