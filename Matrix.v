@@ -139,9 +139,19 @@ Definition matrix_get_row {A : Type} {n m : nat} (i : int) (mat : Matrix A n m) 
 
 Notation "t .[ i , '_' ]" := (matrix_get_row t i)
                              (at level 2, left associativity, format "t .[ i , '_' ]").
-
-
-
+Local Open Scope int63_scope.
+Theorem matrix_ext : forall A n m (m1 m2 : Matrix A n m), (forall i j, i <? vect_length_int m1 = true /\
+                                                             j <? vect_length_int m1.[i] = true ->
+                                                             m1.[i,j] = m2.[i,j]) -> m1 = m2.
+Proof.
+  intros.
+  apply vect_ext.
+  intros i Hi.
+  apply vect_ext.
+  intros j Hj.
+  apply H.
+  split; assumption.
+Qed.
 
 Definition matrix_transpose_el_on {A : Type} {n m : nat} (i j : int) (mat: Matrix A n m) (tgt: Matrix A m n) : Matrix A m n :=
   tgt.[j,i <- mat.[i,j]].
