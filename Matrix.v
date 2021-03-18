@@ -641,62 +641,6 @@ Proof.
                           easy.
                   +++ easy.
            ** split; easy.
-  - 
-    
-             
-             
-             
-             
-             
-                
-                
-                    
-                assert (vect_length_int (U (matrix_copy M)) = vect_length_int M).
-                
-                        
-                  
-           
-
-
-        unfold LU_decomp
-        compute.
-        rewrite vect_length_make.
-        compute.
-        reflexivity.
-        ++ assert (H : 1 = vect_length_int (vect_make (make 1 1))).
-         rewrite vect_length_make.
-           compute.
-           reflexivity.
-        -- rewrite H.
-           apply vect_length_type_vect_length_int.
-           rewrite length_make.
-           compute.
-           reflexivity.
-        
-    
-      rewrite ((vect_length_make) int 1 (1)).
-      simpl in e.
-      assert (Hb : 1 <=? max_length = true).
-      unfold max_length.
-      compute.
-      reflexivity.
-      
-      
-    
-    apply vect_ext.
-    intros.
-    unfold LU_decomp.
-    unfold matrix_copy.
-    unfold matrix_copy_helper.
-    simpl.
-    unfold L_Col_Update.
-    unfold L_Col_Update_Setter.
-    simpl.
-    unfold L.
-    unfold U.
-    unfold L_Setter.
-    unfold U_Setter.
-    simpl.
-    unfold matrix_mult_on.
-    unfold matrix_copy_helper.
-    simpl.
+  - unfold LU_decomp.
+    unfold LU_decomp_with.
+    Admitted.
